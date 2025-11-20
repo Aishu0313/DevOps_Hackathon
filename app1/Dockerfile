@@ -1,51 +1,14 @@
-# Dockerfile
 FROM public.ecr.aws/lambda/nodejs:18
 
-# Copy app files
-COPY appointment-service.js .  
+# Copy package.json first
+COPY package*.json ./
 
-# Set the Lambda function handler
-CMD [ "appointment-service.handler" ]
+# Install dependencies inside container
+RUN npm install
 
+# Copy application code
+COPY . .
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Set Lambda handler file and function
+# Example: index.js -> exports.handler
+CMD ["index.handler"]
