@@ -38,8 +38,8 @@ jobs:
       - name: Import existing resources if needed
         working-directory: ./terraform
         run: |
-          terraform import aws_ecr_repository.app1_repo 539935451710/node-app1 || true
-          terraform import aws_ecr_repository.app2_repo 539935451710/node-app2 || true
+          terraform import aws_ecr_repository.app1_repo node-app1 || true
+          terraform import aws_ecr_repository.app2_repo node-app2 || true
           terraform import aws_iam_role.lambda_exec lambda_exec_role || true
 
       - name: Re-Init after Import
