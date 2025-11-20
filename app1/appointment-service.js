@@ -1,97 +1,79 @@
 const express = require('express');
 const app = express();
-const port = process.env.PORT || 3001;
 
 app.use(express.json());
 
-// In-memory data store
+// Sample data
 let appointments = [
   { id: '1', patientId: '1', date: '2023-06-15', time: '10:00', doctor: 'Dr. Smith' },
   { id: '2', patientId: '2', date: '2023-06-16', time: '14:30', doctor: 'Dr. Johnson' }
 ];
 
+// Health check
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', service: 'Appointment Service' });
 });
 
-// Get all appointments
+// All appointments
 app.get('/appointments', (req, res) => {
   res.json({
     message: 'Appointments retrieved successfully',
     count: appointments.length,
-    appointments
+    appointments: appointments
   });
 });
 
-// Get appointment by ID
+// Appointment by ID
 app.get('/appointments/:id', (req, res) => {
   const appointment = appointments.find(a => a.id === req.params.id);
   if (appointment) {
     res.json({
       message: 'Appointment found',
-      appointment
+      appointment: appointment
     });
   } else {
     res.status(404).json({ error: 'Appointment not found' });
   }
 });
 
-// Create new appointment
+// Create appointment
 app.post('/appointments', (req, res) => {
-  try {
-    const { patientId, date, time, doctor } = req.body;
+  const { patientId, date, time, doctor } = req.body;
 
-    if (!patientId || !date || !time || !doctor) {
-      return res.status(400).json({
-        error: 'Patient ID, date, time, and doctor are required'
-      });
-    }
-
-    const newAppointment = {
-      id: (appointments.length + 1).toString(),
-      patientId,
-      date,
-      time,
-      doctor
-    };
-
-    appointments.push(newAppointment);
-
-    res.status(201).json({
-      message: 'Appointment scheduled successfully',
-      appointment: newAppointment
-    });
-  } catch (error) {
-    console.error('POST ERROR:', error);
-    res.status(500).json({ error: 'Internal server error' });
+  if (!patientId || !date || !time || !doctor) {
+    return res.status(400).json({ error: 'Patient ID, date, time, and doctor are required' });
   }
+
+  const newAppointment = {
+    id: (appointments.length + 1).toString(),
+    patientId,
+    date,
+    time,
+    doctor
+  };
+
+  appointments.push(newAppointment);
+
+  res.status(201).json({
+    message: 'Appointment scheduled successfully',
+    appointment: newAppointment
+  });
 });
 
-// Get appointments for a patient
+// Appointments by patient ID
 app.get('/appointments/patient/:patientId', (req, res) => {
-  try {
-    const { patientId } = req.params;
+  const patientId = req.params.patientId;
 
-    const patientAppointments = appointments.filter(
-      appt => appt.patientId === patientId
-    );
+  const result = appointments.filter(a => a.patientId === patientId);
 
-    if (patientAppointments.length > 0) {
-      res.json({
-        message: `Found ${patientAppointments.length} appointment(s) for patient ${patientId}`,
-        appointments: patientAppointments
-      });
-    } else {
-      res.status(404).json({
-        message: `No appointments found for patient ${patientId}`
-      });
-    }
-  } catch (error) {
-    console.error('ERROR:', error);
-    res.status(500).json({ error: 'Internal server error' });
+  if (result.length > 0) {
+    res.json({
+      message: `Found ${result.length} appointment(s)`,
+      appointments: result
+    });
+  } else {
+    res.status(404).json({ message: `No appointments found for patient ${patientId}` });
   }
 });
 
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Appointment service listening at http://0.0.0.0:${port}`);
-});
+module.exports = app;
