@@ -21,7 +21,7 @@ resource "aws_lambda_function" "app1_lambda" {
 
 resource "aws_lambda_function" "app2_lambda" {
   function_name = "node-app2-fn"
-  image_uri     = "${aws_ecr_repository.app1_repo.repository_url}:latest"
+  image_uri     = "${aws_ecr_repository.app2_repo.repository_url}:latest"
   package_type  = "Image"
   role          = aws_iam_role.lambda_exec.arn
   timeout       = 10
