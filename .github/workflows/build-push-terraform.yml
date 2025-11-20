@@ -1,0 +1,75 @@
+name: Build, Push to ECR and Deploy with Terraform
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        name: checkoutcode
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Create ECR repositories if missing
+        run: |
+          aws ecr describe-repositories --repository-names node-app1 || aws ecr create-repository --repository-name node-app1
+          aws ecr describe-repositories --repository-names node-app2 || aws ecr create-repository --repository-name node-app2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: terraform init
+        working-directory: ./terraform
+        run: terraform init      
+        
+      - name: Import existing resources if needed
+        working-directory: ./terraform
+        run: |
+          terraform import aws_ecr_repository.app1_repo 539935451710/node-app1 || true
+          terraform import aws_ecr_repository.app2_repo 539935451710/node-app2 || true
+          terraform import aws_iam_role.lambda_exec lambda_exec_role || true
+
+      - name: Re-Init after Import
+        working-directory: ./terraform
+        run: terraform init
+
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password --region us-east-1 | \
+          docker login --username AWS --password-stdin 539935451710.dkr.ecr.us-east-1.amazonaws.com
+
+      - name: Build and Push App1
+        run: |
+          docker build -t node-app1 ./app1
+          docker tag node-app1 539935451710.dkr.ecr.us-east-1.amazonaws.com/node-app1:latest
+          docker push 539935451710.dkr.ecr.us-east-1.amazonaws.com/node-app1:latest
+
+      - name: Build and Push App2
+        run: |
+          docker build -t node-app2 ./app2
+          docker tag node-app2 539935451710.dkr.ecr.us-east-1.amazonaws.com/node-app2:latest
+          docker push 539935451710.dkr.ecr.us-east-1.amazonaws.com/node-app2:latest
+
+      - name: terraform apply all
+        working-directory: ./terraform
+        run: |
+          terraform apply -auto-approve
+
+     
+
+
+     
+
