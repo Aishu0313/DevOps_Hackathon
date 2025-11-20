@@ -12,5 +12,15 @@
   "type": "commonjs",
   "dependencies": {
     "express": "^5.1.0"
+  },
+  {
+  "name": "patient-service",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "@vendia/serverless-express": "^4.12.0"
   }
+}
 }
