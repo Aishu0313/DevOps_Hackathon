@@ -116,84 +116,42 @@ resource "aws_lambda_function" "app2_lambda" {
 # API Gateway (HTTP API)
 ###########################################
 resource "aws_apigatewayv2_api" "http_api" {
-  name          = "node-microservices-api"
+  name          = "lambda-http-api"
   protocol_type = "HTTP"
 }
 
-###########################################
-# Integrations (Lambda ↔ API Gateway)
-###########################################
-resource "aws_apigatewayv2_integration" "app1_integration" {
-  api_id                 = aws_apigatewayv2_api.http_api.id
-  integration_type       = "AWS_PROXY"
-  integration_uri        = aws_lambda_function.app1_lambda.invoke_arn
-  integration_method     = "POST"
-  payload_format_version = "2.0"
-}
-
-resource "aws_apigatewayv2_integration" "app2_integration" {
-  api_id                 = aws_apigatewayv2_api.http_api.id
-  integration_type       = "AWS_PROXY"
-  integration_uri        = aws_lambda_function.app2_lambda.invoke_arn
-  integration_method     = "POST"
-  payload_format_version = "2.0"
-}
-
-###########################################
-# Lambda Permissions
-###########################################
-resource "aws_lambda_permission" "allow_apigw_invoke_app1" {
-  statement_id  = "AllowExecutionFromAPIGatewayApp1"
+# Lambda permission for API Gateway to invoke
+resource "aws_lambda_permission" "api_permission" {
+  statement_id  = "AllowInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.app1_lambda.arn
+  function_name = aws_lambda_function.patient_service.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/*/*"
 }
 
-resource "aws_lambda_permission" "allow_apigw_invoke_app2" {
-  statement_id  = "AllowExecutionFromAPIGatewayApp2"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.app2_lambda.arn
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/*/*"
-}
-
-###########################################
-# Routes with proxy forwarding
-###########################################
-resource "aws_apigatewayv2_route" "app1_route" {
+# ANY /{proxy+}
+resource "aws_apigatewayv2_route" "proxy_route" {
   api_id    = aws_apigatewayv2_api.http_api.id
-  route_key = "ANY /app1/{proxy+}"
-  target    = "integrations/${aws_apigatewayv2_integration.app1_integration.id}"
+  route_key = "ANY /{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
 }
 
-resource "aws_apigatewayv2_route" "app2_route" {
-  api_id    = aws_apigatewayv2_api.http_api.id
-  route_key = "ANY /app2/{proxy+}"
-  target    = "integrations/${aws_apigatewayv2_integration.app2_integration.id}"
+# Integration
+resource "aws_apigatewayv2_integration" "lambda_integration" {
+  api_id                 = aws_apigatewayv2_api.http_api.id
+  integration_type        = "AWS_PROXY"
+  integration_uri         = aws_lambda_function.patient_service.invoke_arn
+  payload_format_version  = "2.0"
 }
 
-###########################################
-# Stage (Auto Deploy)
-###########################################
+# Deployment stage
 resource "aws_apigatewayv2_stage" "prod" {
   api_id      = aws_apigatewayv2_api.http_api.id
   name        = "prod"
   auto_deploy = true
 }
 
-###########################################
-# Outputs
-###########################################
-output "api_invoke_url" {
-  description = "Base URL for HTTP API"
-  value       = aws_apigatewayv2_stage.prod.invoke_url
+output "api_url" {
+  value = aws_apigatewayv2_stage.prod.invoke_url
 }
-
-output "app1_endpoint" {
-  value = "${aws_apigatewayv2_stage.prod.invoke_url}app1/"
-}
-
-output "app2_endpoint" {
-  value = "${aws_apigatewayv2_stage.prod.invoke_url}app2/"
 }
