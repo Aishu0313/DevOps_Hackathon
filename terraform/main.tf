@@ -55,7 +55,7 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_exec_attach" {
 
 # IAM Policy: Allow Lambda to pull images from ECR
 resource "aws_iam_policy" "ecr_read_policy" {
-  name        = "LambdaECRReadPolicy-2"
+  name        = "LambdaECRReadPolicy-3"
   description = "Allow Lambda to pull container images from ECR"
 
   policy = jsonencode({
