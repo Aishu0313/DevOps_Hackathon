@@ -55,7 +55,7 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_exec_attach" {
 
 # IAM Policy: Allow Lambda to pull images from ECR
 resource "aws_iam_policy" "ecr_read_policy" {
-  name        = "LambdaECRReadPolicy-4"
+  name        = "LambdaECRReadPolicy-2"
   description = "Allow Lambda to pull container images from ECR"
 
   policy = jsonencode({
@@ -137,6 +137,26 @@ resource "aws_apigatewayv2_integration" "app2_integration" {
   integration_method     = "POST"
   payload_format_version = "2.0"
 }
+###########################################
+# Lambda permissions for API Gateway v2
+###########################################
+resource "aws_lambda_permission" "allow_apigw_invoke_app1" {
+  statement_id  = "AllowExecutionFromAPIGatewayApp1"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.app1_lambda.arn
+  principal     = "apigateway.amazonaws.com"
+  # Allow any stage + route from this API to invoke the lambda
+  source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "allow_apigw_invoke_app2" {
+  statement_id  = "AllowExecutionFromAPIGatewayApp2"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.app2_lambda.arn
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/*/*"
+}
+
 
 ###########################################
 # Routes
