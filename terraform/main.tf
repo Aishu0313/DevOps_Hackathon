@@ -163,25 +163,6 @@ resource "aws_apigatewayv2_stage" "prod" {
 }
 
 ###########################################
-# Lambda Permissions for API Gateway
-###########################################
-resource "aws_lambda_permission" "app1_permission" {
-  statement_id  = "AllowAPIGatewayInvoke_app1"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.app1_lambda.arn
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/*/*"
-}
-
-resource "aws_lambda_permission" "app2_permission" {
-  statement_id  = "AllowAPIGatewayInvoke_app2"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.app2_lambda.arn
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/*/*"
-}
-
-###########################################
 # Outputs
 ###########################################
 output "api_invoke_url" {
