@@ -3,7 +3,7 @@ name: Build, Push to ECR and Deploy with Terraform
 on:
   push:
     branches:
-      - main
+      - master
 
 permissions:
   id-token: write
