@@ -56,7 +56,7 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_exec_attach" {
 # IAM Policy for ECR Access
 ###########################################
 resource "aws_iam_policy" "ecr_read_policy" {
-  name        = "LambdaECRReadPolicy-6"
+  name        = "LambdaECRReadPolicy-7"
   description = "Allow Lambda to pull container images from ECR"
 
   policy = jsonencode({
@@ -153,5 +153,4 @@ resource "aws_apigatewayv2_stage" "prod" {
 
 output "api_url" {
   value = aws_apigatewayv2_stage.prod.invoke_url
-}
 }
