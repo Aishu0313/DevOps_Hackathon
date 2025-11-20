@@ -34,11 +34,11 @@ resource "aws_iam_role" "lambda_exec" {
   name = "lambda_exec_role"
 
   assume_role_policy = jsonencode({
-    Version = "2012-10-17",
+    Version = "2012-10-17"
     Statement = [
       {
-        Action = "sts:AssumeRole",
-        Effect = "Allow",
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
         Principal = {
           Service = "lambda.amazonaws.com"
         }
@@ -47,38 +47,39 @@ resource "aws_iam_role" "lambda_exec" {
   })
 }
 
-# AWS Managed Policy for Lambda logs
 resource "aws_iam_role_policy_attachment" "lambda_basic_exec_attach" {
   role       = aws_iam_role.lambda_exec.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-# IAM Policy: Allow Lambda to pull images from ECR
+###########################################
+# IAM Policy for ECR Access
+###########################################
 resource "aws_iam_policy" "ecr_read_policy" {
-  name        = "LambdaECRReadPolicy-5"
+  name        = "LambdaECRReadPolicy-6"
   description = "Allow Lambda to pull container images from ECR"
 
   policy = jsonencode({
-    Version = "2012-10-17",
+    Version = "2012-10-17"
     Statement = [
       {
-        Sid = "ECRReadAccess",
-        Effect = "Allow",
+        Sid    = "ECRReadAccess"
+        Effect = "Allow"
         Action = [
           "ecr:GetDownloadUrlForLayer",
           "ecr:BatchGetImage",
           "ecr:BatchCheckLayerAvailability",
           "ecr:DescribeImages"
-        ],
+        ]
         Resource = [
           aws_ecr_repository.app1_repo.arn,
           aws_ecr_repository.app2_repo.arn
         ]
       },
       {
-        Sid = "ECRAuth",
-        Effect = "Allow",
-        Action = ["ecr:GetAuthorizationToken"],
+        Sid      = "ECRAuth"
+        Effect   = "Allow"
+        Action   = ["ecr:GetAuthorizationToken"]
         Resource = "*"
       }
     ]
@@ -120,7 +121,7 @@ resource "aws_apigatewayv2_api" "http_api" {
 }
 
 ###########################################
-# Integrations
+# Integrations (Lambda ↔ API Gateway)
 ###########################################
 resource "aws_apigatewayv2_integration" "app1_integration" {
   api_id                 = aws_apigatewayv2_api.http_api.id
@@ -137,15 +138,15 @@ resource "aws_apigatewayv2_integration" "app2_integration" {
   integration_method     = "POST"
   payload_format_version = "2.0"
 }
+
 ###########################################
-# Lambda permissions for API Gateway v2
+# Lambda Permissions
 ###########################################
 resource "aws_lambda_permission" "allow_apigw_invoke_app1" {
   statement_id  = "AllowExecutionFromAPIGatewayApp1"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.app1_lambda.arn
   principal     = "apigateway.amazonaws.com"
-  # Allow any stage + route from this API to invoke the lambda
   source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/*/*"
 }
 
@@ -157,19 +158,18 @@ resource "aws_lambda_permission" "allow_apigw_invoke_app2" {
   source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/*/*"
 }
 
-
 ###########################################
-# Routes
+# Routes with proxy forwarding
 ###########################################
 resource "aws_apigatewayv2_route" "app1_route" {
   api_id    = aws_apigatewayv2_api.http_api.id
-  route_key = "ANY /app1"
+  route_key = "ANY /app1/{proxy+}"
   target    = "integrations/${aws_apigatewayv2_integration.app1_integration.id}"
 }
 
 resource "aws_apigatewayv2_route" "app2_route" {
   api_id    = aws_apigatewayv2_api.http_api.id
-  route_key = "ANY /app2"
+  route_key = "ANY /app2/{proxy+}"
   target    = "integrations/${aws_apigatewayv2_integration.app2_integration.id}"
 }
 
@@ -191,9 +191,9 @@ output "api_invoke_url" {
 }
 
 output "app1_endpoint" {
-  value = "${aws_apigatewayv2_stage.prod.invoke_url}app1"
+  value = "${aws_apigatewayv2_stage.prod.invoke_url}app1/"
 }
 
 output "app2_endpoint" {
-  value = "${aws_apigatewayv2_stage.prod.invoke_url}app2"
+  value = "${aws_apigatewayv2_stage.prod.invoke_url}app2/"
 }
