@@ -1,26 +1,17 @@
 {
   "name": "appointment-service",
   "version": "1.0.0",
-  "description": "",
+  "description": "Appointment microservice for hackathon",
   "main": "appointment-service.js",
+  "type": "commonjs",
   "scripts": {
+    "start": "node appointment-service.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
-    "express": "^5.1.0"
-  },
-  {
-  "name": "patient-service",
-  "version": "1.0.0",
-  "main": "index.js",
-  "license": "MIT",
-  "dependencies": {
-    "express": "^4.18.2",
+    "express": "^5.1.0",
     "@vendia/serverless-express": "^4.12.0"
-  }
-}
+  },
+  "author": "",
+  "license": "ISC"
 }
